@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
-class CourtCase
+use Illuminate\Database\Eloquent\Model;
+
+class CourtCase extends Model
 {
-    protected array $fillable = [
+    protected $fillable = [
         'number',
         'date',
         'time',
@@ -14,4 +16,10 @@ class CourtCase
         'result',
         'solution',
     ];
+
+    // todo сделать только для отдачи на фронт
+    public function getInformationAttribute()
+    {
+        return html_entity_decode($this->attributes['information']);
+    }
 }

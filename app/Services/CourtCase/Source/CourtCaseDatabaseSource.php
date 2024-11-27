@@ -2,10 +2,21 @@
 
 namespace App\Services\CourtCase\Source;
 
+use App\Services\Court\ICourt;
+use Carbon\Carbon;
+use Illuminate\Support\Collection;
+
 class CourtCaseDatabaseSource implements CourtCaseSource
 {
-    public function get()
+    private ICourt $court;
+
+    public function __construct(ICourt $court)
     {
-        // TODO: Implement get() method.
+        $this->court = $court;
+    }
+
+    public function get(string $query, string $date): Collection
+    {
+        return collect();
     }
 }

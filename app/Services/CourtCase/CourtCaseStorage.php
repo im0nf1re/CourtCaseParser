@@ -2,69 +2,71 @@
 
 namespace App\Services\CourtCase;
 
-use App\Requests\CourtCase\CasesForTodayRequestDto;
-use App\Services\CourtCase\Source\CourtCaseSource;
-use App\Services\HtmlParser\HtmlParser;
+use App\Requests\CourtCase\GetCasesRequestDto;
+use App\Services\Court\ICourt;
+use App\Services\CourtCase\Source\CourtCaseDatabaseSource;
+use App\Services\CourtCase\Source\CourtCaseWebSource;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 class CourtCaseStorage
 {
+    /**
+     * @var ICourt[]
+     */
+    private array $courts;
+    private string $query;
     private Carbon $dateFrom;
     private Carbon $dateTo;
 
-    public function __construct(?string $dateFrom = null, ?string $dateTo = null)
+
+    /**
+     * @param ICourt[] $courts
+     * @param GetCasesRequestDto $request
+     */
+    public function __construct(array $courts, GetCasesRequestDto $request)
     {
-        $this->dateFrom = $dateFrom ? Carbon::parse($dateFrom) : Carbon::today();
-        $this->dateTo = $dateTo ? Carbon::parse($dateTo) : Carbon::today();
+        $this->courts = $courts;
+        $this->query = $request->query;
+        $this->dateFrom = $request->dateFrom ? Carbon::parse($request->dateFrom) : Carbon::today();
+        $this->dateTo = $request->dateTo ? Carbon::parse($request->dateTo) : Carbon::today();
     }
 
-    public function getForToday(): Collection
-    {
-        $dateStart = Carbon::today();
-        $dateTo = Carbon::today();
-
-        return $this->get($dateStart, $dateTo);
-    }
-
-    public function getForDateInterval(string $dateFrom, string $dateTo): Collection
-    {
-        $dateStart = Carbon::parse($dateFrom);
-        $dateTo = Carbon::parse($dateTo);
-
-        return $this->get($dateStart, $dateTo);
-    }
-
-    private function get(Carbon $dateStart, Carbon $dateTo): Collection
+    public function getCases(): Collection
     {
         $cases = collect();
 
-        $urls = $this->getUrlsWithSubstitutedDates();
-        for ($i = 0; $i <= $dateStart->diffInDays($dateTo); $i++) {
-            $cases = $cases->merge($this->parseUrls($dateStart->addDays($i)));
+        foreach ($this->courts as $court) {
+            $cases = $cases->merge($this->getCasesForCourt($court));
         }
 
         return $cases;
     }
 
-    private function getUrlsWithSubstitutedDates(Carbon $dateStart): array
-
-    private function getFromSource(CourtCaseSource $source): Collection
+    private function getCasesForCourt(ICourt $court): Collection
     {
+        $cases = collect();
 
-    }
+        $daysInterval = $this->dateFrom->diffInDays($this->dateTo);
+        for ($dayNumber = 0; $dayNumber <= $daysInterval; $dayNumber++) {
 
-    private function parseUrls(Carbon $date): Collection
-    {
-        foreach ($this->urls as $url) {
-            $url = $this->substituteDateToUrl($url, $date);
-            $htmlParser = new HtmlParser($url);
-            $htmlParser->parse();
+            $formattedDate = $this->dateFrom->addDays($dayNumber)->format('d.m.Y');
+            $cases = $cases->merge($this->getFromSource($court, $formattedDate));
         }
+
+        return $cases;
     }
 
-    private function getCasesFromUrl(string $url,    CasesForTodayRequestDto $getCasesDto): array
+    private function getFromSource(ICourt $court, string $date): Collection
     {
+        $databaseSource = new CourtCaseDatabaseSource($court);
+        $cases = $databaseSource->get($this->query, $date);
 
+        if (!$cases->isEmpty()) {
+            return $cases;
+        }
+
+        $webSource = new CourtCaseWebSource($court);
+        return $webSource->get($this->query, $date);
     }
 }
