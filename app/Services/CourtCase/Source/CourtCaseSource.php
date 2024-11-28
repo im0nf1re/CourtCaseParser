@@ -9,5 +9,5 @@ interface CourtCaseSource
 {
     public function __construct(ICourt $court);
 
-    public function get(string $query, string $date): Collection;
+    public function get(string $date, ?string $query = null): Collection;
 }

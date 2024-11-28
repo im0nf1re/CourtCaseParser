@@ -15,7 +15,7 @@ class CourtCaseDatabaseSource implements CourtCaseSource
         $this->court = $court;
     }
 
-    public function get(string $query, string $date): Collection
+    public function get(string $date, ?string $query = null): Collection
     {
         return collect();
     }

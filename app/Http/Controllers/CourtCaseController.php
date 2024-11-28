@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\DataObjects\CourtCaseDto;
 use App\Requests\CourtCase\GetCasesRequestDto;
 use App\Services\Court\CourtRegister;
 use App\Services\CourtCase\CourtCaseStorage;
@@ -16,6 +17,8 @@ class CourtCaseController extends Controller
             $request
         );
 
-        return response()->json($storage->getCases());
+        return response()->json(
+            CourtCaseDto::collect($storage->getCases())
+        );
     }
 }

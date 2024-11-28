@@ -5,6 +5,7 @@ namespace App\Services\CourtCase;
 use App\Requests\CourtCase\GetCasesRequestDto;
 use App\Services\Court\ICourt;
 use App\Services\CourtCase\Source\CourtCaseDatabaseSource;
+use App\Services\CourtCase\Source\CourtCaseSource;
 use App\Services\CourtCase\Source\CourtCaseWebSource;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -15,7 +16,7 @@ class CourtCaseStorage
      * @var ICourt[]
      */
     private array $courts;
-    private string $query;
+    private ?string $query;
     private Carbon $dateFrom;
     private Carbon $dateTo;
 
@@ -49,24 +50,30 @@ class CourtCaseStorage
 
         $daysInterval = $this->dateFrom->diffInDays($this->dateTo);
         for ($dayNumber = 0; $dayNumber <= $daysInterval; $dayNumber++) {
+            $daysToAdd = $dayNumber ? 1 : 0;
 
-            $formattedDate = $this->dateFrom->addDays($dayNumber)->format('d.m.Y');
-            $cases = $cases->merge($this->getFromSource($court, $formattedDate));
+            $formattedDate = $this->dateFrom->addDays($daysToAdd)->format('d.m.Y');
+            $cases = $cases->merge($this->getFromSources($court, $formattedDate));
         }
 
         return $cases;
     }
 
-    private function getFromSource(ICourt $court, string $date): Collection
+    private function getFromSources(ICourt $court, string $date): Collection
     {
         $databaseSource = new CourtCaseDatabaseSource($court);
-        $cases = $databaseSource->get($this->query, $date);
+        $cases = $this->getFromSource($databaseSource, $date);
 
         if (!$cases->isEmpty()) {
             return $cases;
         }
 
         $webSource = new CourtCaseWebSource($court);
-        return $webSource->get($this->query, $date);
+        return $this->getFromSource($webSource, $date);
+    }
+
+    private function getFromSource(CourtCaseSource $source, string $date): Collection
+    {
+        return $source->get($date, $this->query);
     }
 }

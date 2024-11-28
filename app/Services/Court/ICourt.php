@@ -2,7 +2,7 @@
 
 namespace App\Services\Court;
 
-use App\Models\CourtCase;
+use App\Models\CourtCase\CourtCase;
 
 interface ICourt
 {

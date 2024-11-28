@@ -2,7 +2,7 @@
 
 namespace App\Models\Court;
 
-use App\Models\CourtCase;
+use App\Models\CourtCase\CourtCase;
 use App\Services\Court\ICourt;
 use Illuminate\Database\Eloquent\Model;
 

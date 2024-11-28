@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\CourtCase;
 
 use Illuminate\Database\Eloquent\Model;
 
@@ -17,9 +17,13 @@ class CourtCase extends Model
         'solution',
     ];
 
-    // todo сделать только для отдачи на фронт
-    public function getInformationAttribute()
+    public function getHtmlInformationAttribute()
     {
         return html_entity_decode($this->attributes['information']);
+    }
+
+    public function getHtmlResultAttribute()
+    {
+        return html_entity_decode($this->attributes['result']);
     }
 }
